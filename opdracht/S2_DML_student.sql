@@ -30,41 +30,41 @@
 -- S2.1. Vier-daagse cursussen
 --
 -- Geef code en omschrijving van alle cursussen die precies vier dagen duren.
--- DROP VIEW IF EXISTS s2_1; CREATE OR REPLACE VIEW s2_1 AS                                                     -- [TEST]
-
+DROP VIEW IF EXISTS s2_1; CREATE OR REPLACE VIEW s2_1 AS                                                     -- [TEST]
+SELECT code, omschrijving FROM cursussen WHERE lengte = 4;
 
 -- S2.2. Medewerkersoverzicht
 --
 -- Geef alle informatie van alle medewerkers, gesorteerd op functie,
 -- en per functie op leeftijd (van jong naar oud).
--- DROP VIEW IF EXISTS s2_2; CREATE OR REPLACE VIEW s2_2 AS                                                     -- [TEST]
+DROP VIEW IF EXISTS s2_2; CREATE OR REPLACE VIEW s2_2 AS                                                     -- [TEST]
 
-
+SELECT * FROM medewerkers ORDER BY functie, gbdatum DESC;
 -- S2.3. Door het land
 --
 -- Welke cursussen zijn in Utrecht en/of in Maastricht uitgevoerd? Geef
 -- code en begindatum.
--- DROP VIEW IF EXISTS s2_3; CREATE OR REPLACE VIEW s2_3 AS                                                     -- [TEST]
-
+DROP VIEW IF EXISTS s2_3; CREATE OR REPLACE VIEW s2_3 AS                                                     -- [TEST]
+SELECT cursus, begindatum FROM uitvoeringen WHERE (locatie = 'UTRECHT' OR locatie = 'MAASTRICHT');
 
 -- S2.4. Namen
 --
 -- Geef de naam en voorletters van alle medewerkers, behalve van R. Jansen.
--- DROP VIEW IF EXISTS s2_4; CREATE OR REPLACE VIEW s2_4 AS                                                     -- [TEST]
-
+DROP VIEW IF EXISTS s2_4;
+CREATE OR REPLACE VIEW s2_4 AS
+SELECT naam, voorl FROM medewerkers WHERE NOT (naam = 'JANSEN' AND voorl = 'R');
 
 -- S2.5. Nieuwe SQL-cursus
 --
 -- Er wordt een nieuwe uitvoering gepland voor cursus S02, en wel op de
 -- komende 2 maart. De cursus wordt gegeven in Leerdam door Nick Smit.
 -- Voeg deze gegevens toe.                                                                                       -- [TEST]
-
-
+INSERT INTO uitvoeringen (cursus, begindatum, docent, locatie) VALUES ('S02', '2024-03-02', 7369, 'LEERDAM');
 -- S2.6. Stagiairs
 --
 -- Neem één van je collega-studenten aan als stagiair ('STAGIAIR') en
 -- voer zijn of haar gegevens in. Kies een personeelnummer boven de 8000.
-                                                                                        -- [TEST]
+INSERT INTO medewerkers VALUES (8004, 'LUKA', 'L', 'STAGIAIR', null, '2002/08/08', 9.00, null, 10);                                                                                  -- [TEST]
 
 
 -- S2.7. Nieuwe schaal
@@ -72,36 +72,46 @@
 -- We breiden het salarissysteem uit naar zes schalen. Voer een extra schaal in voor mensen die
 -- tussen de 3001 en 4000 euro verdienen. Zij krijgen een toelage van 500 euro.
                                                                                        -- [TEST]
-
+UPDATE schalen SET snr = 6 WHERE snr = 5;
+UPDATE schalen SET ondergrens = 4001 WHERE ondergrens = 3001;
+INSERT INTO schalen(snr, ondergrens, bovengrens, toelage) VALUES(5,3001,4000,500);
 
 -- S2.8. Nieuwe cursus
 --
 -- Er wordt een nieuwe 6-daagse cursus 'Data & Persistency' in het programma opgenomen.
 -- Voeg deze cursus met code 'D&P' toe, maak twee uitvoeringen in Leerdam en schrijf drie
 -- mensen in.                                                                                      -- [TEST]
-
-
+INSERT INTO cursussen (code, omschrijving, type, lengte) VALUES ('D&P', 'Data & Persistency', 'DSG', 6);
+INSERT INTO uitvoeringen (cursus, begindatum, docent, locatie) VALUES ('D&P', '2024-04-01', 7369, 'LEERDAM'), ('D&P', '2024-05-01', 7499, 'LEERDAM');
+INSERT INTO inschrijvingen (cursist, cursus, begindatum) VALUES (7839, 'D&P', '2024-04-01'), (7844, 'D&P', '2024-04-01'), (7900, 'D&P', '2024-05-01');
 -- S2.9. Salarisverhoging
 --
 -- De medewerkers van de afdeling VERKOOP krijgen een salarisverhoging
 -- van 5.5%, behalve de manager van de afdeling, deze krijgt namelijk meer: 7%.
 -- Voer deze verhogingen door.
+UPDATE medewerkers SET maandsal = maandsal * 1.055 WHERE afd = 30 AND chef IS NOT NULL;
 
+UPDATE medewerkers SET maandsal = maandsal * 1.07 WHERE afd = 30 AND chef IS NULL;
 
 -- S2.10. Concurrent
 --
 -- Martens heeft als verkoper succes en wordt door de concurrent
 -- weggekocht. Verwijder zijn gegevens.
-
+DELETE FROM medewerkers WHERE mnr = 7654;
 -- Zijn collega Alders heeft ook plannen om te vertrekken. Verwijder ook zijn gegevens.
 -- Waarom lukt dit (niet)?
-
+DELETE FROM medewerkers WHERE mnr = 7499;
+--Key (mnr)=(7499) is still referenced from table "uitvoeringen". hij staat nog ingescreven als docent bij uitvoeringen
 
 -- S2.11. Nieuwe afdeling
 --
 -- Je wordt hoofd van de nieuwe afdeling 'FINANCIEN' te Leerdam,
 -- onder de hoede van De Koning. Kies een personeelnummer boven de 8000.
 -- Zorg voor de juiste invoer van deze gegevens.
+INSERT INTO afdelingen (anr, naam, locatie, hoofd) VALUES (60, 'FINANCIEN', 'LEERDAM', 8000);
+INSERT INTO medewerkers (mnr, naam, voorl, functie, chef, gbdatum, maandsal, comm, afd)
+VALUES (8005, 'KRAAK', 'C', 'MANAGER', 8000, '2003-08-15', 3000, null, 60);
+UPDATE afdelingen SET hoofd = 8005 WHERE anr=60;
                                                                                       -- [TEST]
 
 
