@@ -28,6 +28,8 @@
 
 
 -- S1.1. Geslacht
+ALTER TABLE medewerkers ADD COLUMN geslacht CHAR(1);
+ALTER TABLE medewerkers ADD CONSTRAINT m_geslacht_chk CHECK (geslacht IN ('M', 'V'));
 --
 -- Voeg een kolom `geslacht` toe aan de medewerkerstabel.
 -- Voeg ook een beperkingsregel `m_geslacht_chk` toe aan deze kolom,
@@ -37,6 +39,11 @@
 
 
 -- S1.2. Nieuwe afdeling
+INSERT INTO medewerkers(mnr, naam, voorl, functie, chef, gbdatum, maandsal, comm, afd, geslacht) VALUES(8000,'DONK','A','DIRECTEUR',null,'1960-05-15','4000.00','2000.00',40,'M');
+INSERT INTO afdelingen (anr, naam, locatie, hoofd) VALUES (50, 'ONDERZOEK', 'ZWOLLE', 8000);
+
+
+
 --
 -- Het bedrijf krijgt een nieuwe onderzoeksafdeling 'ONDERZOEK' in Zwolle.
 -- Om de onderzoeksafdeling op te zetten en daarna te leiden wordt de
@@ -44,17 +51,18 @@
 -- en valt direct onder de directeur.
 -- Voeg de nieuwe afdeling en de nieuwe medewerker toe aan de database.
 
-
 -- S1.3. Verbetering op afdelingentabel
 --
 -- We gaan een aantal verbeteringen doorvoeren aan de tabel `afdelingen`:
 --   a) Maak een sequence die afdelingsnummers genereert. Denk aan de beperking
 --      dat afdelingsnummers veelvouden van 10 zijn.
+CREATE SEQUENCE afd_nr_seq START WITH 50 INCREMENT BY 10 MINVALUE 10 MAXVALUE 99999 CACHE 1;
 --   b) Voeg een aantal afdelingen toe aan de tabel, maak daarbij gebruik van
 --      de nieuwe sequence.
+INSERT INTO afdelingen (anr, naam, locatie, hoofd) VALUES (NEXTVAL('afd_nr_seq'), 'S2', 'ARNHEM', 8000);
 --   c) Op enig moment gaat het mis. De betreffende kolommen zijn te klein voor
 --      nummers van 3 cijfers. Los dit probleem op.
-
+-- Er is een max value gezet.
 
 -- S1.4. Adressen
 --
@@ -68,6 +76,14 @@
 --    einddatum     moet na de ingangsdatum liggen
 --    telefoon      10 cijfers, uniek
 --    med_mnr       FK, verplicht
+CREATE TABLE adressen(postcode char(6), huisnummer int, ingangsdatum date, einddatum date, telefoon char(10) unique, med_mnr numeric(4,0));
+ALTER TABLE adressen ADD PRIMARY KEY (postcode, huisnummer, ingangsdatum);
+ALTER  TABLE adressen ADD FOREIGN KEY (med_mnr) REFERENCES medewerkers(mnr) ON DELETE CASCADE;
+ALTER TABLE adressen ADD CONSTRAINT check_postcode CHECK (postcode ~ '^[0-9]{4}[A-Za-z]{2}$');
+ALTER TABLE adressen ADD CONSTRAINT check_einddatum_groter_begindatum CHECK (einddatum > ingangsdatum);
+ALTER TABLE adressen ADD CONSTRAINT check_telefoon CHECK (telefoon ~ '^[0-9]{10}$');
+INSERT INTO adressen(postcode, huisnummer, ingangsdatum, einddatum, telefoon, med_mnr) VALUES('1111AD', 1, '12/09/2024', '12/10/2024', '0611111111', 8000);
+
 
 
 -- S1.5. Commissie
@@ -75,13 +91,13 @@
 -- De commissie van een medewerker (kolom `comm`) moet een bedrag bevatten als de medewerker een functie als
 -- 'VERKOPER' heeft, anders moet de commissie NULL zijn. Schrijf hiervoor een beperkingsregel. Gebruik onderstaande
 -- 'illegale' INSERTs om je beperkingsregel te controleren.
+SELECT * FROM medewerkers WHERE (functie = 'VERKOPER' AND comm IS NULL) OR (functie <> 'VERKOPER' AND comm IS NOT NULL);
 
 INSERT INTO medewerkers (mnr, naam, voorl, functie, chef, gbdatum, maandsal, comm)
 VALUES (8001, 'MULLER', 'TJ', 'TRAINER', 7566, '1982-08-18', 2000, 500);
 
 INSERT INTO medewerkers (mnr, naam, voorl, functie, chef, gbdatum, maandsal, comm)
 VALUES (8002, 'JANSEN', 'M', 'VERKOPER', 7698, '1981-07-17', 1000, NULL);
-
 
 
 -- -------------------------[ HU TESTRAAMWERK ]--------------------------------
@@ -108,3 +124,4 @@ DELETE FROM afdelingen WHERE anr > 40;
 DELETE FROM medewerkers WHERE mnr < 7369 OR mnr > 7934;
 ALTER TABLE medewerkers DROP CONSTRAINT IF EXISTS m_geslacht_chk;
 ALTER TABLE medewerkers DROP COLUMN IF EXISTS geslacht;
+
